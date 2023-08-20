@@ -1,20 +1,23 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useLevelStore } from '../stores/level'
 import TimerBox from './TimerBox.vue'
 import CountFlag from './CountFlag.vue'
 import DialogWindow from './DialogWindow.vue'
-import LevelBox from './LevelBox.vue'
 
-const data = ref({
-  width: 0,
-  height: 0,
-  mines: 0,
-  time: 0
-})
-
+// const data = ref({
+//   width: 0,
+//   height: 0,
+//   mines: 0,
+//   time: 0
+// })
+const levelStore = useLevelStore()
+const data = computed(() => levelStore.changeLevel)
 const cells = ref(dataAndRest())
+
 const ifMine = ref(false)
 const ifStopGame = ref(true)
+
 let mines = ref(data.value.mines)
 const pointWinGame = ref(0)
 const sumFlag = ref(0)
@@ -111,6 +114,14 @@ function openZeroCell(row, column) {
 }
 
 watch(
+  () => data,
+  () => {
+    console.log('watch startsapper')
+    restData()
+  }
+)
+
+watch(
   cells,
   (cells) => {
     console.log('watch')
@@ -138,18 +149,10 @@ function countShowMine(row, column, show) {
     cells.value[r][c].light = show
   })
 }
-
-function setData(setData) {
-  data.value.height = setData.height
-  data.value.width = setData.width
-  data.value.time = setData.time
-  data.value.mines = setData.mines
-  restData()
-}
 </script>
 
 <template>
-  <div class="flex flex-col gap-2 p-5 backdrop-contrast-75" @contextmenu.prevent>
+  <div class="flex flex-col gap-2 p-5" @contextmenu.prevent>
     <div class="flex gap-2 mx-auto" v-for="(cell, row) in cells" :key="row">
       <div
         class="flex justify-center items-center w-10 h-10 cursor-pointer cell"
@@ -175,7 +178,6 @@ function setData(setData) {
   <CountFlag :count="data.mines - sumFlag"></CountFlag>
   <button @click="restData">ddd</button>
   <DialogWindow @resetData="restData"></DialogWindow>
-  <LevelBox @level="setData"></LevelBox>
 </template>
 
 <style scoped>
