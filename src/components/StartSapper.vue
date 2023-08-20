@@ -113,13 +113,10 @@ function openZeroCell(row, column) {
   }
 }
 
-watch(
-  () => data,
-  () => {
-    console.log('watch startsapper')
-    restData()
-  }
-)
+watch(data, () => {
+  console.log('watch startsapper')
+  restData()
+})
 
 watch(
   cells,
