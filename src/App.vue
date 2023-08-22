@@ -8,7 +8,7 @@ import SettingsMenu from './components/SettingsMenu.vue'
   <header class="w-[600px] mx-auto flex flex-col gap-6">
     <div class="flex gap-10 justify-center items-center mt-9">
       <IconMine class="w-16 h-16" />
-      <h1 class="text-7xl text-gray-800 font-handjet">Сапер</h1>
+      <h1 class="text-7xl text-gray-800 font-handjet">Сапёр</h1>
     </div>
     <nav
       class="grid grid-cols-3 gap-5 justify-items-stretch text-xl text-center text-stone-800 font-roboto"
