@@ -1,28 +1,64 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, defineEmits } from 'vue'
 
 const props = defineProps({
-  start: {
+  ifStartTimer: {
     type: Boolean,
     default: false
+  },
+  ifStopTimer: {
+    type: Boolean,
+    default: true
   },
   time: {
     type: Number,
     default: 1
   }
 })
+
+const emit = defineEmits(['ifSendStop'])
+const lookTime = ref(props.time * 60)
+const stop = ref(props.ifStartTimer)
+const ifSendStop = ref(true)
+
+function toSendStop(par) {
+  ifSendStop.value = par
+  emit('ifSendStop', !par)
+}
+
+setInterval(() => {
+  if (!stop.value) return
+  if (ifSendStop.value && lookTime.value === 0) toSendStop(false)
+  if (lookTime.value === 0) return
+  lookTime.value -= 1
+}, 1000)
+
 watch(
-  () => props.time,
-  (newTime) => {
-    lookTime.value = newTime * 60
+  () => props.ifStartTimer,
+  () => {
+    stop.value = props.ifStartTimer
+    if (!props.ifStartTimer && !props.ifStopTimer) {
+      lookTime.value = props.time * 60
+      ifSendStop.value = true
+    }
   }
 )
-const lookTime = ref(props.time * 60)
-setInterval(() => {
-  if (!props.start) return
-  if (lookTime.value < 0) return
-  lookTime.value--
-}, 1000)
+watch(
+  () => props.ifStopTimer,
+  () => {
+    stop.value = props.ifStopTimer
+    if (!props.ifStartTimer && !props.ifStopTimer) {
+      lookTime.value = props.time * 60
+      ifSendStop.value = true
+    }
+  }
+)
+watch(
+  () => props.time,
+  () => {
+    lookTime.value = props.time * 60
+  }
+)
 </script>
 
 <template>

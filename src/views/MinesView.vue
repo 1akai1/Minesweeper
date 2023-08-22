@@ -3,7 +3,7 @@ import StartSapper from '../components/StartSapper.vue'
 </script>
 
 <template>
-  <main>
+  <main class="w-[600px] mx-auto">
     <StartSapper />
   </main>
 </template>

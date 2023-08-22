@@ -3,27 +3,24 @@ import { computed, ref, watch } from 'vue'
 import { useLevelStore } from '../stores/level'
 import TimerBox from './TimerBox.vue'
 import CountFlag from './CountFlag.vue'
-import DialogWindow from './DialogWindow.vue'
 
-// const data = ref({
-//   width: 0,
-//   height: 0,
-//   mines: 0,
-//   time: 0
-// })
 const levelStore = useLevelStore()
+
 const data = computed(() => levelStore.changeLevel)
+
+const ifToMine = ref(false)
+const ifStartGame = ref(false)
+const ifStopGame = ref(false)
+const ifWinGame = ref(null)
+
 const cells = ref(dataAndRest())
-
-const ifMine = ref(false)
-const ifStopGame = ref(true)
-
-let mines = ref(data.value.mines)
-const pointWinGame = ref(0)
+const openCell = ref(0)
 const sumFlag = ref(0)
-const winGame = ref(null)
+let mines = ref(data.value.mines)
 
 function dataAndRest() {
+  if (data.value.width > 50) return
+  if (data.value.height > 50) return
   return Array.from({ length: data.value.width }, () =>
     Array.from({ length: data.value.height }, () => ({
       mine: false,
@@ -37,35 +34,45 @@ function dataAndRest() {
   )
 }
 
-function start(row, column) {
-  if (data.value.height * data.value.width <= mines.value) return
-  if (!ifStopGame.value) return
+function toStart(row, column) {
+  if (ifStopGame.value) return
+  if (!ifStartGame.value) ifStartGame.value = true
   if (cells.value[row][column].question > 0) return
-  if (!ifMine.value) {
+
+  if (!ifToMine.value) {
     toMine(row, column)
-    ifMine.value = true
+    ifToMine.value = true
   }
-  openZeroCell(row, column)
-  if (data.value.height * data.value.width - data.value.mines === pointWinGame.value) {
-    // restData()
-    ifStopGame.value = false
-    winGame.value = true
+  toOpenCell(row, column)
+
+  if (data.value.height * data.value.width - data.value.mines === openCell.value) {
+    console.log('win')
+    ifStartGame.value = false
+    ifStopGame.value = true
+    ifWinGame.value = true
     return
   }
   if (cells.value[row][column].mine && cells.value[row][column].flag === 0) {
-    // restData()
-    ifStopGame.value = false
-    winGame.value = false
+    console.log('lost')
+    ifStartGame.value = false
+    ifStopGame.value = true
+    ifWinGame.value = false
+    iter((item) => {
+      if (item.mine) {
+        item.open = true
+      }
+    })
     return
   }
 }
 
 function restData() {
-  ifMine.value = false
-  pointWinGame.value = 0
-  winGame.value = null
-  ifStopGame.value = true
-  mines = ref(data.value.mines)
+  ifToMine.value = false
+  openCell.value = 0
+  ifWinGame.value = null
+  ifStopGame.value = false
+  ifStartGame.value = false
+  mines.value = data.value.mines
   cells.value = dataAndRest()
 }
 
@@ -101,92 +108,133 @@ function search(row, column, callback) {
   }
 }
 
-function openZeroCell(row, column) {
+function toOpenCell(row, column) {
   if (cells.value[row][column].open) return
+  if (cells.value[row][column].mine) return
+  openCell.value++
   cells.value[row][column].flag = 0
-  if (cells.value[row][column].countMine > 0) cells.value[row][column].open = true
+  cells.value[row][column].question = 0
+  cells.value[row][column].open = true
   if (cells.value[row][column].countMine === 0) {
-    cells.value[row][column].open = true
-    pointWinGame.value++
-
-    search(row, column, (r, c) => openZeroCell(r, c))
+    search(row, column, (r, c) => toOpenCell(r, c))
   }
 }
 
-watch(data, () => {
-  console.log('watch startsapper')
-  restData()
-})
-
-watch(
-  cells,
-  (cells) => {
-    console.log('watch')
-    sumFlag.value = 0
-    for (const x of cells) {
-      for (const y of x) {
-        sumFlag.value += y.flag
-      }
+function iter(fun) {
+  for (const rowCell of cells.value) {
+    for (const columnCell of rowCell) {
+      fun(columnCell)
     }
-  },
-  { deep: true }
-)
+  }
+}
 
 function flag(row, column) {
-  if (data.value.height * data.value.width <= mines.value) return
   if (cells.value[row][column].open) return
   cells.value[row][column].question = (cells.value[row][column].question + 1) % 3
   if (cells.value[row][column].question === 1) cells.value[row][column].flag = 1
   else cells.value[row][column].flag = 0
+  sumFlag.value = 0
+  iter((item) => {
+    sumFlag.value += item.flag
+  })
 }
 function countShowMine(row, column, show) {
-  if (!ifMine.value) return
+  if (!ifToMine.value) return
   cells.value[row][column].countShow = show
   search(row, column, (r, c) => {
     cells.value[r][c].light = show
   })
 }
-</script>
 
+watch(
+  () => data,
+  () => {
+    restData()
+  },
+  { deep: true }
+)
+</script>
 <template>
-  <div class="flex flex-col gap-2 p-5" @contextmenu.prevent>
-    <div class="flex gap-2 mx-auto" v-for="(cell, row) in cells" :key="row">
+  <div class="grid grid-cols-2 gap-6 mt-5 mb-4 text-xl font-roboto text-stone-800">
+    <button
+      class="px-4 py-2 rounded shadow hover:bg-myGreen-200 bg-myGreen-100"
+      @click="restData()"
+    >
+      Рестарт
+    </button>
+    <div class="flex gap-3 justify-self-end">
+      <div class="flex gap-2 px-4 py-2 rounded shadow bg-myGreen-100">
+        <p>⌛</p>
+        <TimerBox
+          @ifSendStop="
+            (e) => {
+              ifStopGame = e
+            }
+          "
+          :ifStartTimer="ifStartGame"
+          :ifStopTimer="ifStopGame"
+          :time="data.time"
+        />
+      </div>
+      <div class="flex gap-2 px-4 py-2 rounded shadow bg-myGreen-100">
+        <p>🚩 =</p>
+        <CountFlag :count="data.mines - sumFlag"></CountFlag>
+      </div>
+    </div>
+  </div>
+  <div class="flex flex-col gap-1 items-center" @contextmenu.prevent>
+    <div v-for="(cellRow, row) in cells" :key="row" class="flex gap-1">
       <div
-        class="flex justify-center items-center w-10 h-10 cursor-pointer cell"
-        :class="[{ active: x.open, mine: x.mine, activeMine: x.countShow, light: x.light }]"
-        v-for="(x, column) in cell"
+        v-for="(cellColumn, column) in cellRow"
         :key="column"
-        @click="start(row, column)"
+        class="flex justify-center items-center w-4 h-4 rounded-sm cursor-pointer md:w-5 md:h-5 lg:w-6 lg:h-6 cell hover:bg-myGreen-200 bg-myGreen-100"
+        :class="[
+          {
+            active: cellColumn.open,
+            mine: cellColumn.mine,
+            activeMine: cellColumn.countShow,
+            light: cellColumn.light
+          }
+        ]"
+        @click="toStart(row, column)"
         @click.right="flag(row, column)"
         @mousedown.middle="countShowMine(row, column, true)"
         @mouseup.middle="countShowMine(row, column, false)"
       >
-        <p v-if="x.countMine > 0 && x.open" class="text-3xl" :class="`mines-${x.countMine}`">
-          {{ x.countMine }}
+        <p
+          v-if="cellColumn.countMine > 0 && cellColumn.open"
+          class="text-2xl font-medium"
+          :class="`mines-${cellColumn.countMine}`"
+        >
+          {{ cellColumn.countMine }}
         </p>
         <div v-else>
-          <p v-if="x.flag == 1" class="">🚩</p>
-          <p v-if="x.flag == 2" class="">❔</p>
+          <p v-if="cellColumn.flag == 1" class="">🚩</p>
+          <p v-if="cellColumn.question == 2" class="">❔</p>
         </div>
       </div>
     </div>
   </div>
-  <TimerBox :start="ifStopGame" :time="data.time"></TimerBox>
-  <CountFlag :count="data.mines - sumFlag"></CountFlag>
-  <button @click="restData">ddd</button>
-  <DialogWindow @resetData="restData"></DialogWindow>
+
+  <!-- <DialogWindow @resetData="restData"></DialogWindow> -->
 </template>
 
 <style scoped>
 .cell {
-  background-color: rgb(201, 201, 201);
+  box-shadow:
+    2px 1px 2px 0px #cacaca,
+    inset 2px 1px 3px 0px #96f88d75;
 }
 
 .active {
-  background-color: rgb(161, 161, 161);
+  background-color: rgb(197, 197, 197);
+  box-shadow: inset 1px 1px 2px 1px #a0a0a0;
 }
-.mine {
-  background-color: black;
+.mine.active {
+  background-image: url(../assets/IconMine.svg);
+  background-position: center;
+  background-size: 70%;
+  background-repeat: no-repeat;
 }
 .mines-1 {
   color: blue;
@@ -194,7 +242,7 @@ function countShowMine(row, column, show) {
 .mines-2 {
   color: green;
 }
-.mines- {
+.mines-3 {
   color: red;
 }
 .mines-4 {

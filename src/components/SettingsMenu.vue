@@ -1,19 +1,38 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import LevelBox from './LevelBox.vue'
+import { useSettingsMenuStore } from '../stores/settingsMenu'
 
-const showSettings = ref(false)
+const settingsMenuStore = useSettingsMenuStore()
+const showSettings = computed(() => settingsMenuStore.settingsMenu)
+
+function toSetSettingMenu() {
+  if (showSettings.value) {
+    settingsMenuStore.toSetSettingMenu(false)
+  } else settingsMenuStore.toSetSettingMenu(true)
+}
+
+const divtest = ref()
+function handleClickOutside(event) {
+  if (!divtest.value || divtest.value.contains(event.target)) return
+  settingsMenuStore.toSetSettingMenu(false)
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <template>
-  <div class="flex flex-col">
-    <button
-      class="justify-self-center"
-      @click="showSettings ? (showSettings = false) : (showSettings = true)"
-    >
+  <div ref="divtest" class="flex flex-col" :class="{ 'bg-myGreen-200': showSettings }">
+    <button class="justify-self-center" @click="toSetSettingMenu()">
       <slot></slot>
     </button>
-    <LevelBox v-if="showSettings" />
+    <LevelBox @click.stop v-show="showSettings" />
   </div>
 </template>
 

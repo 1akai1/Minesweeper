@@ -7,20 +7,35 @@ const levelStore = useLevelStore()
 const level = ref([
   { width: 8, height: 8, mines: 10, time: 10 },
   { width: 16, height: 16, mines: 30, time: 40 },
-  { width: 32, height: 16, mines: 70, time: 100 },
-  { width: null, height: null, mines: null, time: null }
+  { width: 16, height: 32, mines: 70, time: 100 },
+  { width: NaN, height: NaN, mines: NaN, time: NaN }
 ])
+
 const setLevel = ref(0)
 function toSetLevel(event) {
-  if (event) setLevel.value = (setLevel.value + 1) % 4
+  if (!event) {
+    for (const item in level.value[setLevel.value]) {
+      if (typeof level.value[setLevel.value][item] !== 'number') {
+        level.value[setLevel.value][item] = NaN
+      }
+    }
+  }
+  if (event === true) setLevel.value = (setLevel.value + 1) % 4
+  if (
+    level.value[setLevel.value].width * level.value[setLevel.value].height <=
+    level.value[setLevel.value].mines
+  )
+    return
   levelStore.tochangeLevel(level.value[setLevel.value])
 }
 </script>
 
 <template>
   <div class="relative">
-    <div class="flex absolute flex-col justify-start py-2 w-max">
-      <div class="flex">
+    <div
+      class="flex absolute flex-col justify-start px-7 py-2 pb-6 mt-6 w-max rounded shadow-sm bg-myGreen-200"
+    >
+      <div class="flex m-2">
         <div class="flex flex-col gap-2">
           <div class="flex flex-row gap-2 items-center">
             <div>Сложность:</div>
@@ -41,32 +56,32 @@ function toSetLevel(event) {
         <p>Минут:</p>
         <p>{{ level[setLevel].time }}</p>
       </div>
-      <div v-else class="grid gap-1 grid-cols">
+      <div v-else class="grid gap-1 items-center grid-cols">
         <p>X:</p>
         <input
-          @input="toSetLevel(false)"
-          type="text"
+          type="number"
+          class="px-1 py-1 w-[60px] placeholder-gray-600 bg-white rounded border appearance-none"
           v-model="level[setLevel].width"
-          placeholder="8"
+          placeholder="<50"
         />
         <p>Y:</p>
         <input
-          @input="toSetLevel(false)"
-          type="text"
+          type="number"
+          class="px-1 py-1 w-[60px] placeholder-gray-600 bg-white rounded border appearance-none"
           v-model="level[setLevel].height"
-          placeholder="8"
+          placeholder="<50"
         />
         <p>Мины:</p>
         <input
-          @input="toSetLevel(false)"
-          type="text"
+          type="number"
+          class="px-1 py-1 w-[60px] placeholder-gray-600 bg-white rounded border appearance-none"
           v-model="level[setLevel].mines"
-          placeholder="10"
+          placeholder="<2499"
         />
         <p>Минут:</p>
         <input
-          @input="toSetLevel(false)"
-          type="text"
+          type="number"
+          class="px-1 py-1 w-[60px] placeholder-gray-600 bg-white rounded border appearance-none"
           v-model="level[setLevel].time"
           placeholder="10"
         />
@@ -76,7 +91,27 @@ function toSetLevel(event) {
 </template>
 
 <style scoped>
+.background {
+  background-color: rgb(184, 184, 184);
+  box-shadow: inset 1px 2px 3px 1px #525252;
+  border-radius: 5px;
+}
 .grid-cols {
   grid-template-columns: min-content max-content;
+}
+
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+}
+
+input[type='number']:hover,
+input[type='number']:focus {
+  -moz-appearance: number-input;
 }
 </style>
