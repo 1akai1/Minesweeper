@@ -16,7 +16,7 @@ import SettingsMenu from './components/SettingsMenu.vue'
       <RouterLink class="px-4 py-2 rounded shadow bg-myGreen-100 hover:bg-myGreen-200" to="/"
         >Играть</RouterLink
       >
-      <RouterLink class="px-4 py-2 rounded shadow bg-myGreen-100 hover:bg-myGreen-200" to="/lider"
+      <RouterLink class="px-4 py-2 rounded shadow bg-myGreen-100 hover:bg-myGreen-200" to="/list"
         >Таблица лидеров</RouterLink
       >
       <SettingsMenu class="px-4 py-2 rounded shadow bg-myGreen-100 hover:bg-myGreen-200"

@@ -1,9 +1,10 @@
 <script setup>
 import { ref } from 'vue'
 import { useLevelStore } from '../stores/level'
+import { useGetAddDataStore } from '../stores/getAddData'
 
 const levelStore = useLevelStore()
-
+const getAddDataStore = useGetAddDataStore()
 const level = ref([
   { width: 8, height: 8, mines: 10, time: 10 },
   { width: 16, height: 16, mines: 30, time: 40 },
@@ -27,6 +28,7 @@ function toSetLevel(event) {
   )
     return
   levelStore.tochangeLevel(level.value[setLevel.value])
+  getAddDataStore.toSetLevel(setLevel.value)
 }
 </script>
 

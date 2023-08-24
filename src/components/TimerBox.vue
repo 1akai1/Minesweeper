@@ -1,5 +1,8 @@
 <script setup>
 import { ref, watch, defineEmits } from 'vue'
+import { useGetAddDataStore } from '../stores/getAddData'
+
+const getAddDataStore = useGetAddDataStore()
 
 const props = defineProps({
   ifStartTimer: {
@@ -31,6 +34,7 @@ setInterval(() => {
   if (ifSendStop.value && lookTime.value === 0) toSendStop(false)
   if (lookTime.value === 0) return
   lookTime.value -= 1
+  getAddDataStore.toSetTime(lookTime.value)
 }, 1000)
 
 watch(

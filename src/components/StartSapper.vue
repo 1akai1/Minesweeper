@@ -1,10 +1,12 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useLevelStore } from '../stores/level'
+import { useGetAddDataStore } from '../stores/getAddData'
 import TimerBox from './TimerBox.vue'
 import CountFlag from './CountFlag.vue'
 
 const levelStore = useLevelStore()
+const getAddDataStore = useGetAddDataStore()
 
 const data = computed(() => levelStore.changeLevel)
 
@@ -50,6 +52,7 @@ function toStart(row, column) {
     ifStartGame.value = false
     ifStopGame.value = true
     ifWinGame.value = true
+    getAddDataStore.toAddData()
     return
   }
   if (cells.value[row][column].mine && cells.value[row][column].flag === 0) {
@@ -129,6 +132,7 @@ function iter(fun) {
 }
 
 function flag(row, column) {
+  if (ifStopGame.value) return
   if (cells.value[row][column].open) return
   cells.value[row][column].question = (cells.value[row][column].question + 1) % 3
   if (cells.value[row][column].question === 1) cells.value[row][column].flag = 1
